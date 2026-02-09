@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyStoryApp API 测试工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f7;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #007AFF;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .progress {
+            margin-top: 15px;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #007AFF;
+            transition: width 0.3s;
+        }
+        
+        .progress-text {
+            margin-top: 5px;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        audio, video {
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 8px;
+        }
+        
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        .api-url {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 MyStoryApp API 测试工具</h1>
+        
+        <!-- 服务器配置 -->
+        <div class="card">
+            <h2>⚙️ 服务器配置</h2>
+            <div class="form-group">
+                <label>API 地址</label>
+                <input type="text" id="apiUrl" value="http://localhost:3000/api/v1" placeholder="http://localhost:3000/api/v1">
+            </div>
+            <button onclick="checkHealth()">检查连接</button>
+            <div id="healthResult"></div>
+        </div>
+        
+        <!-- TTS 测试 -->
+        <div class="card">
+            <h2>🎤 语音合成 (TTS)</h2>
+            <div class="form-group">
+                <label>文本内容</label>
+                <textarea id="ttsText" placeholder="输入要合成的文字...">欢迎使用我的故事应用，这是百炼语音合成测试。</textarea>
+            </div>
+            <div class="form-group">
+                <label>语音角色</label>
+                <select id="ttsVoice">
+                    <option value="standardFemale">知甜 - 温柔女声</option>
+                    <option value="standardMale">知哲 - 标准男声</option>
+                    <option value="gentleFemale">知树 - 柔和女声</option>
+                    <option value="deepMale">知达 - 磁性男声</option>
+                    <option value="child">知妙 - 童声</option>
+                    <option value="cartoon">知飞 - 活泼女声</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>语速: <span id="speedValue">1.0</span></label>
+                <input type="range" id="ttsSpeed" min="0.5" max="2.0" step="0.25" value="1.0" oninput="document.getElementById('speedValue').textContent=this.value">
+            </div>
+            <button onclick="testTTS()">生成语音</button>
+            <div id="ttsResult"></div>
+        </div>
+        
+        <!-- 图片扩展测试 -->
+        <div class="card">
+            <h2>🖼️ 图片扩展</h2>
+            <div class="form-group">
+                <label>选择图片</label>
+                <input type="file" id="imageFile" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label>扩展风格</label>
+                <select id="imageStyle">
+                    <option value="cinematic">电影感</option>
+                    <option value="anime">动漫风</option>
+                    <option value="realistic">写实风</option>
+                    <option value="dreamy">梦幻风</option>
+                    <option value="vintage">复古风</option>
+                    <option value="artistic">艺术风</option>
+                </select>
+            </div>
+            <button onclick="testImageExpand()">扩展图片</button>
+            <div id="imageResult"></div>
+        </div>
+        
+        <!-- 视频生成测试 -->
+        <div class="card">
+            <h2>🎬 视频生成</h2>
+            <div class="form-group">
+                <label>视频标题</label>
+                <input type="text" id="videoTitle" value="测试视频" placeholder="输入视频标题">
+            </div>
+            
+            <div class="form-group">
+                <label>幻灯片 1 - 图片URL</label>
+                <input type="text" id="slide1Image" value="https://picsum.photos/1280/720" placeholder="图片URL">
+                <label style="margin-top: 8px;">字幕</label>
+                <input type="text" id="slide1Caption" value="第一张幻灯片" placeholder="字幕文字">
+                <label style="margin-top: 8px;">配音文本</label>
+                <input type="text" id="slide1Voice" value="这是第一张幻灯片的配音内容。" placeholder="配音文字">
+            </div>
+            
+            <div class="form-group">
+                <label>幻灯片 2 - 图片URL</label>
+                <input type="text" id="slide2Image" value="https://picsum.photos/1280/721" placeholder="图片URL">
+                <label style="margin-top: 8px;">字幕</label>
+                <input type="text" id="slide2Caption" value="第二张幻灯片" placeholder="字幕文字">
+                <label style="margin-top: 8px;">配音文本</label>
+                <input type="text" id="slide2Voice" value="这是第二张幻灯片的配音内容。" placeholder="配音文字">
+            </div>
+            
+            <div class="form-group">
+                <label>配置</label>
+                <select id="videoResolution">
+                    <option value="720p">720p HD</option>
+                    <option value="1080p">1080p Full HD</option>
+                    <option value="480p">480p SD</option>
+                </select>
+            </div>
+            
+            <button onclick="createVideo()">创建视频</button>
+            <div id="videoResult"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = () => document.getElementById('apiUrl').value.replace(/\/$/, '');
+        
+        // 检查健康状态
+        async function checkHealth() {
+            const resultDiv = document.getElementById('healthResult');
+            resultDiv.innerHTML = '<div class="result">检查中...</div>';
+            
+            try {
+                const response = await fetch(API_URL().replace('/api/v1', '') + '/health');
+                const data = await response.json();
+                
+                if (data.status === 'ok') {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ 服务器在线\n版本: ${data.version}\n时间: ${data.timestamp}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ 连接失败\n${error.message}\n\n请确保：\n1. 后端服务已启动 (npm run dev)\n2. Redis 已启动\n3. API 地址正确
+                    </div>
+                `;
+            }
+        }
+        
+        // 测试 TTS
+        async function testTTS() {
+            const resultDiv = document.getElementById('ttsResult');
+            const text = document.getElementById('ttsText').value;
+            const voiceType = document.getElementById('ttsVoice').value;
+            const speed = parseFloat(document.getElementById('ttsSpeed').value);
+            
+            resultDiv.innerHTML = '<div class="result">生成中...</div>';
+            
+            try {
+                const response = await fetch(`${API_URL()}/tts/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, voiceType, speed })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ 生成成功\n时长: ${data.data.duration.toFixed(1)}s\n地址: ${data.data.audioUrl}
+                        </div>
+                        <audio controls src="${data.data.audioUrl}"></audio>
+                    `;
+                } else {
+                    throw new Error(data.error?.message || '生成失败');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ ${error.message}</div>`;
+            }
+        }
+        
+        // 测试图片扩展
+        async function testImageExpand() {
+            const resultDiv = document.getElementById('imageResult');
+            const fileInput = document.getElementById('imageFile');
+            const style = document.getElementById('imageStyle').value;
+            
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = '<div class="result error">❌ 请选择图片</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="result">扩展中... (可能需要10-30秒)</div>';
+            
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+            formData.append('style', style);
+            
+            try {
+                const response = await fetch(`${API_URL()}/image/expand`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ 扩展成功\n地址: ${data.data.expandedImageUrl}
+                        </div>
+                        <img src="${data.data.expandedImageUrl}" alt="扩展后的图片">
+                    `;
+                } else {
+                    throw new Error(data.error?.message || '扩展失败');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ ${error.message}</div>`;
+            }
+        }
+        
+        // 创建视频
+        async function createVideo() {
+            const resultDiv = document.getElementById('videoResult');
+            
+            const payload = {
+                title: document.getElementById('videoTitle').value,
+                description: '测试视频',
+                slides: [
+                    {
+                        imageUrl: document.getElementById('slide1Image').value,
+                        caption: document.getElementById('slide1Caption').value,
+                        voiceText: document.getElementById('slide1Voice').value,
+                        duration: 5,
+                        transition: 'fade'
+                    },
+                    {
+                        imageUrl: document.getElementById('slide2Image').value,
+                        caption: document.getElementById('slide2Caption').value,
+                        voiceText: document.getElementById('slide2Voice').value,
+                        duration: 5,
+                        transition: 'slideLeft'
+                    }
+                ],
+                config: {
+                    resolution: document.getElementById('videoResolution').value,
+                    frameRate: 30,
+                    voiceType: 'standardFemale',
+                    voiceSpeed: 1.0,
+                    backgroundMusic: 'gentle',
+                    subtitleEnabled: true,
+                    subtitlePosition: 'bottom',
+                    aiImageExpansion: false,
+                    expansionStyle: 'cinematic'
+                }
+            };
+            
+            resultDiv.innerHTML = '<div class="result">创建任务中...</div>';
+            
+            try {
+                const response = await fetch(`${API_URL()}/video/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const taskId = data.data.taskId;
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ 任务创建成功\n任务ID: ${taskId}\n预计时间: ${data.data.estimatedTime}s
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="videoProgress" style="width: 0%"></div>
+                            </div>
+                            <div class="progress-text" id="videoStatus">等待中...</div>
+                        </div>
+                    `;
+                    
+                    // 开始轮询
+                    pollVideoStatus(taskId);
+                } else {
+                    throw new Error(data.error?.message || '创建失败');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ ${error.message}</div>`;
+            }
+        }
+        
+        // 轮询视频状态
+        async function pollVideoStatus(taskId) {
+            const maxAttempts = 60;
+            let attempts = 0;
+            
+            const interval = setInterval(async () => {
+                attempts++;
+                
+                try {
+                    const response = await fetch(`${API_URL()}/video/status/${taskId}`);
+                    const data = await response.json();
+                    
+                    if (!data.success) {
+                        clearInterval(interval);
+                        document.getElementById('videoStatus').textContent = '查询失败';
+                        return;
+                    }
+                    
+                    const status = data.data;
+                    const progress = Math.round(status.progress * 100);
+                    
+                    document.getElementById('videoProgress').style.width = `${progress}%`;
+                    document.getElementById('videoStatus').textContent = 
+                        `${progress}% - ${status.message}`;
+                    
+                    if (status.status === 'completed') {
+                        clearInterval(interval);
+                        document.getElementById('videoResult').innerHTML += `
+                            <div class="result success" style="margin-top: 10px;">
+                                ✅ 视频生成完成！
+                            </div>
+                            <video controls src="${status.outputUrl}"></video>
+                        `;
+                    } else if (status.status === 'failed') {
+                        clearInterval(interval);
+                        document.getElementById('videoStatus').textContent = '生成失败';
+                        document.getElementById('videoResult').innerHTML += `
+                            <div class="result error" style="margin-top: 10px;">
+                                ❌ ${status.error || '生成失败'}
+                            </div>
+                        `;
+                    }
+                    
+                    if (attempts >= maxAttempts) {
+                        clearInterval(interval);
+                        document.getElementById('videoStatus').textContent = '超时，请手动查询';
+                    }
+                } catch (error) {
+                    console.error('轮询错误:', error);
+                }
+            }, 3000);
+        }
+        
+        // 页面加载时检查健康状态
+        window.onload = checkHealth;
+    </script>
+</body>
+</html>
