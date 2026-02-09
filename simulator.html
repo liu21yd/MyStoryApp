@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyStoryApp - iOS 模拟器预览</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .simulator-container {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .iphone-frame {
+            width: 390px;
+            height: 844px;
+            background: #1a1a1a;
+            border-radius: 55px;
+            padding: 12px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.4);
+            position: relative;
+        }
+        .iphone-frame::before {
+            content: '';
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 126px;
+            height: 35px;
+            background: #1a1a1a;
+            border-radius: 20px;
+            z-index: 10;
+        }
+        .iphone-screen {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: 45px;
+            overflow: hidden;
+            position: relative;
+        }
+        .status-bar {
+            height: 50px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+        .app-content {
+            height: 100%;
+            background: #f2f2f7;
+            overflow-y: auto;
+            padding-top: 50px;
+            padding-bottom: 90px;
+        }
+        .tab-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 84px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: 20px;
+            z-index: 100;
+        }
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: #999;
+            font-size: 10px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .tab-item.active { color: #ff2d55; }
+        .tab-icon { font-size: 24px; }
+        
+        /* 导航栏 */
+        .nav-header {
+            background: white;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        .nav-title {
+            font-size: 34px;
+            font-weight: 700;
+            color: #000;
+        }
+        
+        /* 内容卡片 */
+        .content { padding: 16px; }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .card-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .input-group { margin-bottom: 12px; }
+        .input-label {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e5e5e5;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            background: #f9f9f9;
+        }
+        textarea.input-field { min-height: 80px; resize: vertical; }
+        
+        /* 风格选择 */
+        .style-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            scrollbar-width: none;
+        }
+        .style-scroll::-webkit-scrollbar { display: none; }
+        .style-card {
+            min-width: 90px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .style-card:hover { transform: scale(1.02); }
+        .style-card.active {
+            background: rgba(255,45,85,0.1);
+            border-color: #ff2d55;
+        }
+        .style-icon { font-size: 28px; margin-bottom: 6px; }
+        .style-name { font-size: 12px; font-weight: 600; }
+        .style-desc { font-size: 10px; color: #999; margin-top: 4px; }
+        
+        /* 时长选择 */
+        .duration-selector {
+            display: flex;
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 2px;
+        }
+        .duration-option {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .duration-option.active {
+            background: white;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        /* 场景卡片 */
+        .scene-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .scene-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .scene-title { font-weight: 600; font-size: 16px; }
+        .delete-btn { color: #ff3b30; cursor: pointer; }
+        .image-upload {
+            width: 100%;
+            height: 140px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        .image-upload .icon { font-size: 40px; margin-bottom: 8px; }
+        .image-upload-text { font-size: 14px; }
+        .emotion-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .emotion-tag {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .emotion-tag:hover { transform: scale(1.05); }
+        .emotion-tag.selected { border-color: currentColor; font-weight: 600; }
+        .emotion-happy { background: rgba(255,204,0,0.15); color: #ff9500; }
+        .emotion-romantic { background: rgba(255,45,85,0.15); color: #ff2d55; }
+        .emotion-calm { background: rgba(52,199,89,0.15); color: #34c759; }
+        .emotion-nostalgic { background: rgba(175,82,222,0.15); color: #af52de; }
+        .emotion-neutral { background: rgba(142,142,147,0.15); color: #8e8e93; }
+        
+        /* 按钮 */
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary {
+            background: linear-gradient(135deg, #ff2d55 0%, #ff6b35 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255,45,85,0.3);
+        }
+        .btn-secondary {
+            background: rgba(255,45,85,0.1);
+            color: #ff2d55;
+            border: 2px dashed #ff2d55;
+        }
+        
+        /* 故事列表 */
+        .story-item {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .story-item:hover { transform: translateX(4px); }
+        .story-thumb {
+            width: 70px;
+            height: 70px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+        .story-info { flex: 1; }
+        .story-title { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+        .story-desc { font-size: 13px; color: #666; margin-bottom: 8px; }
+        .story-meta {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .story-tag {
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 6px;
+            background: rgba(255,45,85,0.1);
+            color: #ff2d55;
+        }
+        .story-status {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .status-done { background: rgba(52,199,89,0.15); color: #34c759; }
+        .status-progress { background: rgba(0,122,255,0.15); color: #007aff; }
+        
+        /* 空状态 */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            text-align: center;
+        }
+        .empty-icon { font-size: 80px; margin-bottom: 20px; opacity: 0.3; }
+        .empty-title { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+        .empty-desc { font-size: 15px; color: #999; margin-bottom: 24px; }
+        
+        /* 加载动画 */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .loading-overlay.active { opacity: 1; pointer-events: all; }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #ff2d55;
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        h2.simulator-label {
+            color: white;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="simulator-container">
+        <!-- 模拟器 1: 创作页面 -->
+        <div>
+            <div class="iphone-frame">
+                <div class="iphone-screen">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span style="display: flex; gap: 5px;">📶 5G 🔋</span>
+                    </div>
+                    
+                    <div class="app-content">
+                        <div class="nav-header">
+                            <div class="nav-title">创作</div>
+                        </div>
+                        
+                        <div class="content">
+                            <!-- 故事信息 -->
+                            <div class="card">
+                                <div class="card-title">📍 故事信息</div>
+                                <div class="input-group">
+                                    <label class="input-label">标题</label>
+                                    <input type="text" class="input-field" placeholder="给你的故事起个名字" id="storyTitle">
+                                </div>
+                                <div class="input-group">
+                                    <label class="input-label">描述</label>
+                                    <textarea class="input-field" placeholder="描述一下你的故事..."></textarea>
+                                </div>
+                            </div>
+                            
+                            <!-- 视频设置 -->
+                            <div class="card">
+                                <div class="card-title">🎨 视频风格</div>
+                                <div class="style-scroll">
+                                    <div class="style-card active" onclick="selectStyle(this)">
+                                        <div class="style-icon">🎬</div>
+                                        <div class="style-name">电影感</div>
+                                        <div class="style-desc">专业调色</div>
+                                    </div>
+                                    <div class="style-card" onclick="selectStyle(this)">
+                                        <div class="style-icon">✨</div>
+                                        <div class="style-name">动漫风</div>
+                                        <div class="style-desc">色彩鲜艳</div>
+                                    </div>
+                                    <div class="style-card" onclick="selectStyle(this)">
+                                        <div class="style-icon">📷</div>
+                                        <div class="style-name">写实风</div>
+                                        <div class="style-desc">自然真实</div>
+                                    </div>
+                                    <div class="style-card" onclick="selectStyle(this)">
+                                        <div class="style-icon">☁️</div>
+                                        <div class="style-name">梦幻风</div>
+                                        <div class="style-desc">柔和朦胧</div>
+                                    </div>
+                                </div>
+                                
+                                <label class="input-label" style="margin-top: 16px;">视频时长</label>
+                                <div class="duration-selector">
+                                    <div class="duration-option" onclick="selectDuration(this)">10秒</div>
+                                    <div class="duration-option active" onclick="selectDuration(this)">30秒</div>
+                                    <div class="duration-option" onclick="selectDuration(this)">60秒</div>
+                                </div>
+                            </div>
+                            
+                            <!-- 场景 -->
+                            <div class="card">
+                                <div class="card-title">🎬 故事场景</div>
+                                
+                                <div class="scene-card">
+                                    <div class="scene-header">
+                                        <span class="scene-title">场景 1</span>
+                                        <span class="delete-btn">🗑️</span>
+                                    </div>
+                                    <div class="image-upload" onclick="uploadImage(this)">
+                                        <div class="icon">📷</div>
+                                        <div class="image-upload-text">点击添加图片</div>
+                                    </div>
+                                    <div class="input-group">
+                                        <label class="input-label">场景描述</label>
+                                        <input type="text" class="input-field" placeholder="描述这个场景...">
+                                    </div>
+                                    <label class="input-label">情感氛围</label>
+                                    <div class="emotion-tags">
+                                        <span class="emotion-tag emotion-happy selected" onclick="selectEmotion(this)">😊 开心</span>
+                                        <span class="emotion-tag emotion-romantic" onclick="selectEmotion(this)">❤️ 浪漫</span>
+                                        <span class="emotion-tag emotion-calm" onclick="selectEmotion(this)">🍃 平静</span>
+                                    </div>
+                                </div>
+                                
+                                <button class="btn btn-secondary" onclick="addScene()">
+                                    <span>➕</span>
+                                    <span>添加场景</span>
+                                </button>
+                            </div>
+                            
+                            <button class="btn btn-primary" onclick="generateVideo()">
+                                <span>✨</span>
+                                <span>生成视频</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-bar">
+                        <div class="tab-item active">
+                            <span class="tab-icon">➕</span>
+                            <span>创作</span>
+                        </div>
+                        <div class="tab-item" onclick="switchTab('list')">
+                            <span class="tab-icon">🎬</span>
+                            <span>我的故事</span>
+                        </div>
+                        <div class="tab-item">
+                            <span class="tab-icon">⚙️</span>
+                            <span>设置</span>
+                        </div>
+                    </div>
+                    
+                    <div class="loading-overlay" id="loadingOverlay">
+                        <div class="spinner"></div>
+                        <div style="font-size: 18px; font-weight: 600;">正在生成视频...</div>
+                        <div style="font-size: 14px; opacity: 0.8; margin-top: 8px;">AI 正在处理您的故事</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div style="font-size: 13px; margin-top: 10px;" id="progressText">0%</div>
+                    </div>
+                </div>
+            </div>
+            <h2 class="simulator-label">创作页面 - 选择风格、添加场景</h2>
+        </div>
+        
+        <!-- 模拟器 2: 故事列表 -->
+        <div>
+            <div class="iphone-frame">
+                <div class="iphone-screen">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span style="display: flex; gap: 5px;">📶 5G 🔋</span>
+                    </div>
+                    
+                    <div class="app-content" id="listPage">
+                        <div class="nav-header">
+                            <div class="nav-title">我的故事</div>
+                        </div>
+                        
+                        <div class="content">
+                            <!-- 已完成 -->
+                            <div style="margin-bottom: 20px;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: #34c759; font-weight: 600; font-size: 13px;">
+                                    <span>✓</span>
+                                    <span>已完成</span>
+                                    <span style="margin-left: auto; color: #999;">2</span>
+                                </div>
+                                
+                                <div class="story-item">
+                                    <div class="story-thumb" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">🎬</div>
+                                    <div class="story-info">
+                                        <div class="story-title">我的旅行日记</div>
+                                        <div class="story-desc">记录在云南的美好时光</div>
+                                        <div class="story-meta">
+                                            <span class="story-tag">🎬 电影感</span>
+                                            <span class="story-tag" style="background: rgba(0,122,255,0.1); color: #007aff;">⏱ 30秒</span>
+                                            <span class="story-status status-done">✓ 已完成</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="story-item">
+                                    <div class="story-thumb" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">🌸</div>
+                                    <div class="story-info">
+                                        <div class="story-title">樱花季</div>
+                                        <div class="story-desc">东京赏樱之旅</div>
+                                        <div class="story-meta">
+                                            <span class="story-tag">☁️ 梦幻风</span>
+                                            <span class="story-tag" style="background: rgba(0,122,255,0.1); color: #007aff;">⏱ 10秒</span>
+                                            <span class="story-status status-done">✓ 已完成</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 生成中 -->
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: #007aff; font-weight: 600; font-size: 13px;">
+                                    <span>⟳</span>
+                                    <span>生成中</span>
+                                    <span style="margin-left: auto; color: #999;">1</span>
+                                </div>
+                                
+                                <div class="story-item">
+                                    <div class="story-thumb" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">🏔️</div>
+                                    <div class="story-info">
+                                        <div class="story-title">雪山之旅</div>
+                                        <div class="story-desc">瑞士阿尔卑斯山</div>
+                                        <div class="story-meta">
+                                            <span class="story-tag">📷 写实风</span>
+                                            <span class="story-tag" style="background: rgba(0,122,255,0.1); color: #007aff;">⏱ 60秒</span>
+                                            <span class="story-status status-progress">⟳ 65%</span>
+                                        </div>
+                                        <div style="margin-top: 10px; background: #e5e5e5; height: 4px; border-radius: 2px;">
+                                            <div style="width: 65%; height: 100%; background: #007aff; border-radius: 2px;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-bar">
+                        <div class="tab-item" onclick="switchTab('create')">
+                            <span class="tab-icon">➕</span>
+                            <span>创作</span>
+                        </div>
+                        <div class="tab-item active">
+                            <span class="tab-icon">🎬</span>
+                            <span>我的故事</span>
+                        </div>
+                        <div class="tab-item">
+                            <span class="tab-icon">⚙️</span>
+                            <span>设置</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h2 class="simulator-label">故事列表 - 管理所有故事</h2>
+        </div>
+        
+        <!-- 模拟器 3: 空状态 -->
+        <div>
+            <div class="iphone-frame">
+                <div class="iphone-screen">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span style="display: flex; gap: 5px;">📶 5G 🔋</span>
+                    </div>
+                    
+                    <div class="app-content">
+                        <div class="nav-header">
+                            <div class="nav-title">我的故事</div>
+                        </div>
+                        
+                        <div class="content">
+                            <div class="empty-state">
+                                <div class="empty-icon">🎬</div>
+                                <div class="empty-title">还没有故事</div>
+                                <div class="empty-desc">去"创作"页面制作你的<br>第一个故事吧</div>
+                                <button class="btn btn-primary" style="width: auto; padding: 14px 32px;" onclick="switchTab('create')">
+                                    开始创作
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-bar">
+                        <div class="tab-item" onclick="switchTab('create')">
+                            <span class="tab-icon">➕</span>
+                            <span>创作</span>
+                        </div>
+                        <div class="tab-item active">
+                            <span class="tab-icon">🎬</span>
+                            <span>我的故事</span>
+                        </div>
+                        <div class="tab-item">
+                            <span class="tab-icon">⚙️</span>
+                            <span>设置</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h2 class="simulator-label">空状态 - 引导用户创作</h2>
+        </div>
+    </div>
+    
+    <script>
+        function selectStyle(element) {
+            document.querySelectorAll('.style-card').forEach(card => card.classList.remove('active'));
+            element.classList.add('active');
+        }
+        
+        function selectDuration(element) {
+            document.querySelectorAll('.duration-option').forEach(opt => opt.classList.remove('active'));
+            element.classList.add('active');
+        }
+        
+        function selectEmotion(element) {
+            const parent = element.parentElement;
+            parent.querySelectorAll('.emotion-tag').forEach(tag => tag.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+        
+        function uploadImage(element) {
+            element.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+            element.innerHTML = '<div class="icon">✓</div><div class="image-upload-text">图片已添加</div>';
+        }
+        
+        function addScene() {
+            alert('添加新场景功能');
+        }
+        
+        function generateVideo() {
+            const title = document.getElementById('storyTitle').value;
+            if (!title) {
+                alert('请先输入故事标题');
+                return;
+            }
+            
+            const overlay = document.getElementById('loadingOverlay');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            overlay.classList.add('active');
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        overlay.classList.remove('active');
+                        alert('🎉 视频生成成功！');
+                    }, 500);
+                }
+                progressFill.style.width = progress + '%';
+                progressText.textContent = Math.floor(progress) + '%';
+            }, 300);
+        }
+        
+        function switchTab(tab) {
+            if (tab === 'list') {
+                document.getElementById('listPage').scrollIntoView({ behavior: 'smooth' });
+            } else if (tab === 'create') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+    </script>
+</body>
+</html>
