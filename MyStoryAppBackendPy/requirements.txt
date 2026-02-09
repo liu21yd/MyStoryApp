@@ -1,0 +1,28 @@
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+python-multipart==0.0.6
+
+# Celery 任务队列
+celery==5.3.6
+redis==5.0.1
+
+# HTTP 客户端
+httpx==0.26.0
+
+# 视频处理
+ffmpeg-python==0.2.0
+
+# 工具库
+python-dotenv==1.0.0
+loguru==0.7.2
+aiofiles==23.2.1
+
+# 开发依赖
+pytest==7.4.4
+pytest-asyncio==0.23.3
+httpx==0.26.0
+
+# 监控（可选）
+flower==2.0.1
