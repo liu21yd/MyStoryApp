@@ -49,12 +49,16 @@ MyStoryApp/
 │   │   ├── ContentView.swift     # 主界面
 │   │   ├── CreateStoryView.swift # 创作页面
 │   │   ├── MyStoriesView.swift   # 故事列表
-│   │   └── SettingsView.swift    # 设置页面
+│   │   ├── SettingsView.swift    # 设置页面
+│   │   └── PPTVideoView.swift    # PPT视频生成器 ⭐️新增
 │   ├── Models/                   # 数据模型
-│   │   └── StoryModels.swift     # 故事/场景模型
+│   │   ├── StoryModels.swift     # 故事/场景模型
+│   │   └── PPTVideoModels.swift  # PPT视频模型 ⭐️新增
 │   └── Services/                 # 服务层
 │       ├── StoryManager.swift    # 故事管理
-│       └── VideoGenerationService.swift  # 视频生成
+│       ├── VideoGenerationService.swift  # 视频生成
+│       ├── PPTVideoGenerator.swift       # PPT视频生成 ⭐️新增
+│       └── PPTVideoManager.swift         # PPT视频管理 ⭐️新增
 └── MyStoryApp.xcodeproj/         # Xcode项目
 
 ```
@@ -130,6 +134,60 @@ private let apiKey = "YOUR_KLING_API_KEY"
 | 梦幻风 | 柔和色调、朦胧美 | 浪漫场景、艺术创作 |
 | 复古风 | 胶片颗粒、怀旧感 | 老照片、怀旧主题 |
 
+## 🎬 PPT 视频生成器（新增功能）
+
+将照片和文字一键转换为精美的 PPT 风格视频，支持 AI 图片扩展、配音和背景音乐。
+
+### 功能特性
+
+- **🖼️ AI 图片扩展**: 使用 Gemini AI 将图片智能扩展为视频素材
+- **📝 智能字幕**: 自动添加描述文字，支持多种样式和动画
+- **🗣️ AI 配音**: 文字转语音，支持多种声音类型
+- **🎵 背景音乐**: 内置多种风格 BGM，自动混音
+- **✨ 转场效果**: 支持淡入淡出、滑动、翻转等多种转场
+- **🎨 多种风格**: 电影感、动漫风、写实风、梦幻风、复古风
+
+### 使用流程
+
+1. **添加幻灯片**
+   - 点击右上角「+」选择照片
+   - 可添加多张照片，长按拖动排序
+
+2. **编辑幻灯片**
+   - 点击幻灯片进入编辑
+   - 添加字幕内容
+   - 输入配音文本（可与字幕不同）
+   - 设置显示时长（2-30秒）
+   - 选择转场效果
+
+3. **配置视频**
+   - 选择分辨率（480p/720p/1080p/2K/4K）
+   - 开启 AI 图片扩展
+   - 选择配音类型
+   - 选择背景音乐
+   - 配置字幕样式
+
+4. **生成视频**
+   - 点击「生成视频」
+   - 等待处理完成
+   - 预览、分享或保存
+
+### 技术实现
+
+| 功能 | 技术方案 |
+|------|----------|
+| 图片扩展 | Gemini 3 Pro Image API |
+| 语音合成 | Azure TTS / iOS Speech |
+| 视频合成 | FFmpeg / AVFoundation |
+| 字幕渲染 | FFmpeg drawtext / CATextLayer |
+| 音频混音 | AVAudioMix |
+
+### 文件格式支持
+
+- **图片**: JPG, PNG, HEIC
+- **输出视频**: MP4 (H.264)
+- **音频**: AAC, MP3
+
 ## ⚙️ 配置选项
 
 在设置页面可配置：
@@ -163,12 +221,24 @@ private let apiKey = "YOUR_KLING_API_KEY"
 
 ## 📝 TODO
 
-- [ ] 添加背景音乐选择
-- [ ] 支持自定义转场效果
+### 故事视频
+- [x] 添加背景音乐选择
+- [x] 支持自定义转场效果
 - [ ] 添加视频编辑功能
 - [ ] 支持批量生成
 - [ ] 添加社区分享功能
 - [ ] 支持更多AI API接入
+
+### PPT视频生成器 ✅ 新增
+- [x] 基础PPT视频生成功能
+- [x] AI 图片扩展
+- [x] AI 配音合成
+- [x] 字幕渲染
+- [x] 背景音乐混音
+- [ ] 更多转场动画效果
+- [ ] 自定义字体上传
+- [ ] 视频模板市场
+- [ ] 云端渲染加速
 
 ## 📄 许可证
 

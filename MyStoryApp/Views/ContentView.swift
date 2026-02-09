@@ -21,19 +21,26 @@ struct ContentView: View {
                 }
                 .tag(0)
             
+            // PPT视频生成
+            PPTVideoView()
+                .tabItem {
+                    Label("PPT视频", systemImage: "photo.stack.fill")
+                }
+                .tag(1)
+            
             // 我的故事列表
             MyStoriesView(storyManager: storyManager)
                 .tabItem {
                     Label("我的故事", systemImage: "film.fill")
                 }
-                .tag(1)
+                .tag(2)
             
             // 设置
             SettingsView()
                 .tabItem {
                     Label("设置", systemImage: "gear")
                 }
-                .tag(2)
+                .tag(3)
         }
         .accentColor(.pink)
     }

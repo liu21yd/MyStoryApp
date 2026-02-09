@@ -1,0 +1,24 @@
+.DS_Store
+node_modules/
+dist/
+*.log
+logs/
+.env
+.env.local
+.env.*.local
+
+# Uploads and outputs
+uploads/*
+!uploads/.gitkeep
+output/*
+!output/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test coverage
+coverage/
+.nyc_output/
