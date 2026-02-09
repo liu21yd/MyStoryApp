@@ -7,7 +7,7 @@ from celery import Task
 from asgiref.sync import async_to_sync
 
 from app.tasks import celery_app
-from app.models.schemas import Slide, VideoConfigRequest, VideoTask
+from app.models.schemas import Slide, VideoConfigRequest
 from app.services.bailian_image import bailian_image_service
 from app.services.bailian_tts import bailian_tts_service
 from app.services.video_service import video_service

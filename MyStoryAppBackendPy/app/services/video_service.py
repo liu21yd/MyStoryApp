@@ -118,29 +118,33 @@ class VideoService:
         subtitle_filter = ""
         if config.subtitle_enabled and slide.caption:
             y_position = self._get_subtitle_y_position(config.subtitle_position, height)
-            # 使用 drawtext 添加字幕
-            subtitle_filter = f",drawtext=text='{slide.caption}':fontcolor=white:fontsize=48:x=(w-text_w)/2:y={y_position}:box=1:boxcolor=black@0.5:boxborderw=10"
+            # 转义特殊字符
+            safe_caption = slide.caption.replace("'", "\\'")
+            subtitle_filter = f",drawtext=text='{safe_caption}':fontcolor=white:fontsize=48:x=(w-text_w)/2:y={y_position}:box=1:boxcolor=black@0.5:boxborderw=10"
         
         # 使用 FFmpeg 生成视频
         try:
+            vf_filter = (
+                f"fps={config.frame_rate},"
+                f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
+                f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,"
+                f"fade=t=in:st=0:d=0.5,"
+                f"fade=t=out:st={slide.duration-0.5}:d=0.5"
+            )
+            
             (
                 ffmpeg
                 .input(image_path, loop=1, t=slide.duration)
-                .filter('fps', fps=config.frame_rate)
-                .filter('scale', width, height, force_original_aspect_ratio='decrease')
-                .filter('pad', width, height, '(ow-iw)/2', '(oh-ih)/2')
-                .filter('fade', type='in', start_time=0, duration=0.5)
-                .filter('fade', type='out', start_time=slide.duration-0.5, duration=0.5)
                 .output(
                     str(output_path),
                     vcodec='libx264',
                     pix_fmt='yuv420p',
-                    **{'vf': f'fps={config.frame_rate},scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,fade=t=in:st=0:d=0.5,fade=t=out:st={slide.duration-0.5}:d=0.5'}
+                    vf=vf_filter
                 )
                 .run(overwrite_output=True, quiet=True)
             )
         except ffmpeg.Error as e:
-            logger.error(f"FFmpeg 错误: {e.stderr}")
+            logger.error(f"FFmpeg 错误: {e}")
             raise
         
         return output_path
