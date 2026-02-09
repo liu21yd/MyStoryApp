@@ -3,8 +3,8 @@ import Redis from 'ioredis';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 import { VideoTask } from '../models';
-import { imageService } from './imageService';
-import { ttsService } from './ttsService';
+import { bailianImageService } from './bailianImageService';
+import { bailianTTSService } from './bailianTTSService';
 import { videoService } from './videoService';
 
 // Redis 客户端
@@ -104,11 +104,11 @@ videoQueue.process('generate', 2, async (job) => {
     
     const processedSlides = [...slides];
     
-    // 步骤1: 扩展图片
+    // 步骤1: 扩展图片 (使用百炼通义万相)
     if (config.aiImageExpansion) {
       for (let i = 0; i < processedSlides.length; i++) {
         try {
-          const expandedUrl = await imageService.expandImage(
+          const expandedUrl = await bailianImageService.expandImage(
             processedSlides[i].imageUrl,
             config.expansionStyle
           );
@@ -118,41 +118,42 @@ videoQueue.process('generate', 2, async (job) => {
             taskId,
             'expanding_images',
             0.1 + (0.3 * (i + 1) / processedSlides.length),
-            `扩展图片 ${i + 1}/${processedSlides.length}...`
+            `百炼AI扩展图片 ${i + 1}/${processedSlides.length}...`
           );
         } catch (error) {
-          logger.warn(`Image expansion failed for slide ${i}, using original`);
+          logger.warn(`百炼图片扩展失败，使用原图: slide ${i}`);
           // 扩展失败，使用原图
         }
       }
     }
     
-    // 步骤2: 生成配音
+    // 步骤2: 生成配音 (使用百炼语音合成)
     await taskService.updateTaskStatus(
       taskId,
       'generating_voice',
       0.4,
-      '生成配音中...'
+      '百炼AI生成配音中...'
     );
     
     for (let i = 0; i < processedSlides.length; i++) {
       if (processedSlides[i].voiceText) {
         try {
-          const ttsResult = await ttsService.generateSpeech(
-            processedSlides[i].voiceText,
-            config.voiceType,
-            config.voiceSpeed
-          );
+          // 根据文本长度选择同步或异步接口
+          const voiceText = processedSlides[i].voiceText;
+          const ttsResult = voiceText.length > 300
+            ? await bailianTTSService.generateSpeechAsync(voiceText, config.voiceType, config.voiceSpeed)
+            : await bailianTTSService.generateSpeech(voiceText, config.voiceType, config.voiceSpeed);
+          
           processedSlides[i].voiceUrl = ttsResult.url;
           
           await taskService.updateTaskStatus(
             taskId,
             'generating_voice',
             0.4 + (0.2 * (i + 1) / processedSlides.length),
-            `生成配音 ${i + 1}/${processedSlides.length}...`
+            `百炼生成配音 ${i + 1}/${processedSlides.length}...`
           );
         } catch (error) {
-          logger.warn(`TTS failed for slide ${i}`);
+          logger.warn(`百炼TTS失败: slide ${i}`);
         }
       }
     }

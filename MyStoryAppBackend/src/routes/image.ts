@@ -4,7 +4,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { body } from 'express-validator';
 import { config } from '../config';
-import { imageService } from '../services/imageService';
+import { bailianImageService } from '../services/bailianImageService';
 import { taskService } from '../services/taskService';
 import { asyncHandler } from '../middleware/errorHandler';
 import { logger } from '../utils/logger';
@@ -26,7 +26,7 @@ const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
-    if (imageService.validateImage(file.mimetype)) {
+    if (bailianImageService.validateImage(file.mimetype)) {
       cb(null, true);
     } else {
       cb(new Error('Invalid file type. Only images are allowed.'));
@@ -53,13 +53,13 @@ router.post(
     const style = req.body.style || 'cinematic';
     const taskId = uuidv4();
     
-    // 异步处理
+    // 异步处理 - 使用百炼通义万相
     const processImage = async () => {
       try {
-        const expandedUrl = await imageService.expandImage(req.file!.path, style);
+        const expandedUrl = await bailianImageService.expandImage(req.file!.path, style);
         return { taskId, expandedImageUrl: expandedUrl };
       } catch (error) {
-        logger.error('Image expansion error:', error);
+        logger.error('百炼图片扩展错误:', error);
         throw error;
       }
     };
@@ -81,7 +81,7 @@ router.post(
   '/validate',
   asyncHandler(async (req, res) => {
     const { mimetype } = req.body;
-    const isValid = imageService.validateImage(mimetype);
+    const isValid = bailianImageService.validateImage(mimetype);
     
     res.json({
       success: true,

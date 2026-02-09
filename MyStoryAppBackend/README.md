@@ -178,13 +178,23 @@ GET /api/v1/video/result/:taskId
 | `PORT` | 服务端口 | 否 (默认3000) |
 | `NODE_ENV` | 环境模式 | 否 |
 | `REDIS_URL` | Redis 连接地址 | 是 |
-| `GEMINI_API_KEY` | Gemini AI API Key | 是 |
-| `AZURE_TTS_KEY` | Azure TTS Key | 是 |
-| `AZURE_TTS_REGION` | Azure TTS 区域 | 是 |
+| `BAILIAN_API_KEY` | **阿里云百炼 API Key** ⭐️ | **是** |
+| `GEMINI_API_KEY` | Gemini AI API Key | 否 (备用) |
+| `AZURE_TTS_KEY` | Azure TTS Key | 否 (备用) |
+| `AZURE_TTS_REGION` | Azure TTS 区域 | 否 |
 | `AWS_ACCESS_KEY_ID` | AWS S3 Key | 否 |
 | `AWS_SECRET_ACCESS_KEY` | AWS S3 Secret | 否 |
 | `AWS_S3_BUCKET` | S3 Bucket 名称 | 否 |
 | `STORAGE_TYPE` | 存储类型 (local/s3) | 否 (默认local) |
+
+### 百炼 API Key 获取
+
+1. 访问 [阿里云百炼](https://dashscope.aliyun.com/)
+2. 登录阿里云账号
+3. 进入「API-KEY 管理」创建新 Key
+4. 开通以下服务：
+   - 通义万相（图像生成）
+   - Sambert 语音合成
 
 ## 项目结构
 

@@ -7,12 +7,15 @@ export const config = {
     url: process.env.REDIS_URL || 'redis://localhost:6379'
   },
   
-  // Gemini AI
+  // Bailian (阿里云百炼)
+  bailian: {
+    apiKey: process.env.BAILIAN_API_KEY || ''
+  },
+  
+  // 保留备用配置
   gemini: {
     apiKey: process.env.GEMINI_API_KEY || ''
   },
-  
-  // Azure TTS
   azureTTS: {
     key: process.env.AZURE_TTS_KEY || '',
     region: process.env.AZURE_TTS_REGION || 'eastasia'

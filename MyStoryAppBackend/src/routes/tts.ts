@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { ttsService } from '../services/ttsService';
+import { bailianTTSService } from '../services/bailianTTSService';
 import { asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
@@ -17,7 +17,10 @@ router.post(
   asyncHandler(async (req, res) => {
     const { text, voiceType = 'standardFemale', speed = 1.0 } = req.body;
     
-    const result = await ttsService.generateSpeech(text, voiceType, speed);
+    // 使用百炼语音合成
+    const result = text.length > 300
+      ? await bailianTTSService.generateSpeechAsync(text, voiceType, speed)
+      : await bailianTTSService.generateSpeech(text, voiceType, speed);
     
     res.json({
       success: true,
@@ -36,7 +39,7 @@ router.post(
 router.get(
   '/voices',
   asyncHandler(async (req, res) => {
-    const voices = ttsService.getSupportedVoices();
+    const voices = bailianTTSService.getSupportedVoices();
     
     res.json({
       success: true,
