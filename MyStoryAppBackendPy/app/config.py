@@ -4,6 +4,7 @@
 
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+import secrets
 
 
 class Settings(BaseSettings):
@@ -11,6 +12,12 @@ class Settings(BaseSettings):
     
     # 百炼 API
     BAILIAN_API_KEY: str = ""
+    
+    # 数据库
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/mystoryapp"
+    
+    # JWT 密钥（自动生成或使用环境变量）
+    SECRET_KEY: str = secrets.token_urlsafe(32)
     
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"

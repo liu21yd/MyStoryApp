@@ -1,6 +1,25 @@
 version: '3.8'
 
 services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: mystoryapp-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=mystoryapp
+      - POSTGRES_PASSWORD=mystoryapp123
+      - POSTGRES_DB=mystoryapp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mystoryapp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Redis 缓存和队列
   redis:
     image: redis:7-alpine
@@ -28,6 +47,7 @@ services:
       - "8000:8000"
     environment:
       - BAILIAN_API_KEY=${BAILIAN_API_KEY}
+      - DATABASE_URL=postgresql+asyncpg://mystoryapp:mystoryapp123@postgres:5432/mystoryapp
       - REDIS_URL=redis://redis:6379/0
       - STORAGE_TYPE=local
       - UPLOAD_DIR=/app/uploads
@@ -38,16 +58,18 @@ services:
       - backend-output:/app/output
       - backend-logs:/app/logs
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health').raise_for_status()"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
-  # Celery Worker (Python)
+  # Celery Worker
   worker:
     build:
       context: ./MyStoryAppBackendPy
@@ -57,6 +79,7 @@ services:
     command: celery -A app.tasks worker --loglevel=info --concurrency=2
     environment:
       - BAILIAN_API_KEY=${BAILIAN_API_KEY}
+      - DATABASE_URL=postgresql+asyncpg://mystoryapp:mystoryapp123@postgres:5432/mystoryapp
       - REDIS_URL=redis://redis:6379/0
       - STORAGE_TYPE=local
       - UPLOAD_DIR=/app/uploads
@@ -67,10 +90,11 @@ services:
       - backend-output:/app/output
       - backend-logs:/app/logs
     depends_on:
+      - postgres
       - redis
       - backend
 
-  # Celery Flower (任务监控，可选)
+  # Celery Flower
   flower:
     build:
       context: ./MyStoryAppBackendPy
@@ -101,6 +125,7 @@ services:
 
 # 数据卷
 volumes:
+  postgres-data:
   redis-data:
   backend-uploads:
   backend-output:
