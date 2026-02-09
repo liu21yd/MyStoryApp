@@ -10,6 +10,7 @@ import PhotosUI
 
 struct ContentView: View {
     @StateObject private var storyManager = StoryManager()
+    @StateObject private var userService = UserService.shared
     @State private var selectedTab = 0
     
     var body: some View {
@@ -28,19 +29,26 @@ struct ContentView: View {
                 }
                 .tag(1)
             
+            // 素材库
+            MaterialLibraryView()
+                .tabItem {
+                    Label("素材库", systemImage: "folder.fill")
+                }
+                .tag(2)
+            
             // 我的故事列表
             MyStoriesView(storyManager: storyManager)
                 .tabItem {
                     Label("我的故事", systemImage: "film.fill")
                 }
-                .tag(2)
-            
-            // 设置
-            SettingsView()
-                .tabItem {
-                    Label("设置", systemImage: "gear")
-                }
                 .tag(3)
+            
+            // 个人中心
+            ProfileView()
+                .tabItem {
+                    Label("我的", systemImage: "person.fill")
+                }
+                .tag(4)
         }
         .accentColor(.pink)
     }
