@@ -33,6 +33,14 @@ class Settings(BaseSettings):
     # API
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
+    BASE_URL: str = ""
+    
+    # 阿里云 OSS 配置
+    OSS_ACCESS_KEY_ID: str = ""
+    OSS_ACCESS_KEY_SECRET: str = ""
+    OSS_ENDPOINT: str = ""  # 如: oss-cn-beijing.aliyuncs.com
+    OSS_BUCKET: str = ""
+    OSS_CUSTOM_DOMAIN: str = ""  # 可选: CDN 自定义域名
     
     class Config:
         env_file = ".env"

@@ -16,6 +16,7 @@ from app.db.material import Material, MaterialType, VideoTaskDB
 from app.auth.utils import get_current_user
 from app.config import settings
 from app.core.logger import logger
+from app.services.storage import get_storage
 import uuid
 import os
 
@@ -109,20 +110,35 @@ async def upload_material(
             detail=f"不支持的文件类型: {file.content_type}"
         )
     
-    # 保存文件
+    # 生成唯一文件名
     file_ext = file.filename.split(".")[-1] if "." in file.filename else "bin"
-    unique_name = f"{uuid.uuid4()}.{file_ext}"
+    unique_name = f"{current_user.id}_{uuid.uuid4()}.{file_ext}"
     
-    user_upload_dir = os.path.join(settings.UPLOAD_DIR, str(current_user.id))
-    os.makedirs(user_upload_dir, exist_ok=True)
-    
-    file_path = os.path.join(user_upload_dir, unique_name)
-    
+    # 读取文件内容
     content = await file.read()
-    with open(file_path, "wb") as f:
-        f.write(content)
-    
     file_size = len(content)
+    
+    # 根据存储类型选择保存方式
+    storage = get_storage()
+    
+    if settings.STORAGE_TYPE.lower() == "local":
+        # 本地存储：保存到用户目录
+        user_upload_dir = os.path.join(settings.UPLOAD_DIR, str(current_user.id))
+        os.makedirs(user_upload_dir, exist_ok=True)
+        file_path = os.path.join(user_upload_dir, unique_name)
+        
+        with open(file_path, "wb") as f:
+            f.write(content)
+        
+        file_url = f"/uploads/{current_user.id}/{unique_name}"
+    else:
+        # 云存储：上传到 OSS/S3
+        file_url = await storage.upload_from_bytes(
+            content,
+            unique_name,
+            content_type=file.content_type
+        )
+        file_path = file_url  # 云存储时 file_path 存 URL
     
     # 创建素材记录
     material = Material(
@@ -130,7 +146,7 @@ async def upload_material(
         title=title or file.filename,
         description=description,
         material_type=material_type_enum,
-        file_url=f"/uploads/{current_user.id}/{unique_name}",
+        file_url=file_url,
         file_path=file_path,
         file_size=file_size,
         file_format=file_ext.lower(),
@@ -307,6 +323,14 @@ async def delete_material(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="素材不存在"
         )
+    
+    # 从云存储删除文件（如果不是本地存储）
+    if settings.STORAGE_TYPE.lower() != "local":
+        try:
+            storage = get_storage()
+            await storage.delete_file(material.file_url)
+        except Exception as e:
+            logger.warning(f"删除云存储文件失败: {e}")
     
     # 软删除
     material.is_deleted = 1
